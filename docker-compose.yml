@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-123}
+      - POSTGRES_DB=${POSTGRES_DB:-xml-parser}
+    ports:
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB:-xml-parser} -U ${POSTGRES_USER:-postgres}" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  app:
+    build: .
+    container_name: xml_parser_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - XML_URL=${XML_URL:-https://expro.ru/bitrix/catalog_export/export_Sai.xml}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${POSTGRES_DB:-xml-parser}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-123}
+    ports:
+      - "${APP_PORT:-8082}:${APP_PORT:-8082}"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
