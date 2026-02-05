@@ -71,6 +71,8 @@ mvn clean install
 docker-compose up
 ```
 
+3. Интерактивный интерфейс - [Swagger](http://localhost:8082/swagger-ui/index.html):
+
 ## Конфигурация
 
 Конфигурация сервиса задается через environment переменные:
